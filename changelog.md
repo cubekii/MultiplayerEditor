@@ -1,3 +1,6 @@
+# 0.1.0
+- Bug Fixes
+- Gamemode syncs
 # 0.0.5
 - Added more characters on the ip address
 - Fix ui
