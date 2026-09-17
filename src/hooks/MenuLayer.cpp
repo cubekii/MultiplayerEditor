@@ -32,7 +32,7 @@ class $modify(CollabMenuLayer, MenuLayer){
 
         m_fields->m_joinBtn = joinBtn;
 
-        MouseTooltip::get()->registerRegion(joinBtn, "Join A Lobby By IP", {80, 100, 255});
+        //MouseTooltip::get()->registerRegion(joinBtn, "Join A Lobby By IP", {80, 100, 255});
 
         /* --------------------- */
 
@@ -42,9 +42,11 @@ class $modify(CollabMenuLayer, MenuLayer){
     void onExit(){
         MenuLayer::onExit();
         
+        /*
         if (m_fields->m_joinBtn) {
             MouseTooltip::get()->unregisterRegion(m_fields->m_joinBtn);
         }
+        */
     }
 
     void onJoinSession(CCObject*){
