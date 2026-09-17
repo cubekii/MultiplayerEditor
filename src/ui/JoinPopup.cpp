@@ -81,7 +81,7 @@ bool JoinPopup::init(){
     return true;
 }
 
-void JoinPopup::OnJoin(CCObject*){
+void JoinPopup::OnJoin(CCObject*) {
     std::string address = m_addressInput->getString();
     std::string password = m_passInput->getString();
 
@@ -114,7 +114,39 @@ void JoinPopup::OnJoin(CCObject*){
 
     log::info("Attempting to join: {}:{}", ip, port);
 
+    auto loadcircle = LoadingCircle::create();
+    std::thread([loadcircle, ip, port, password]() {
+        CCTouchDispatcher::get()->setDispatchEvents(false);
+        loadcircle->show();
+
+        GJGameLevel* level = nullptr;
+
+        if (g_network->connect(ip,port,password)) {
+            g_isHost = false;
+            g_isInSession = true;
+            g_sync->setUserID(g_network->getPeerID());
+            //get level
+            level = GJGameLevel::create();
+            level->m_levelName = "Collab Session";
+            level->m_dontSave = true;
+        }
+
+        geode::queueInMainThread([loadcircle, level]() {
+            loadcircle->fadeAndRemove();
+        CCTouchDispatcher::get()->setDispatchEvents(true);
+            if (level) {
+                auto scene = CCScene::create();
+                auto editorLayer = LevelEditorLayer::create(level, false);
+                scene->addChild(editorLayer);
+                CCDirector::sharedDirector()->replaceScene(CCTransitionFade::create(0.5f,scene));
+            } else {
+                FLAlertLayer::create("Connection Failed", "Couldn't connect to host!", "OK")->show();
+            }
+        });
+    }).detach();
+
     // connect to ip
+    /*
     if (g_network->connect(ip,port,password)){
         g_isHost = false;
         g_isInSession = true;
@@ -137,4 +169,5 @@ void JoinPopup::OnJoin(CCObject*){
     } else {
         FLAlertLayer::create("Connection Failed", "Couldn't connect to host!", "OK")->show();
     }
+    */
 }
