@@ -81,7 +81,7 @@ bool JoinPopup::init(){
     return true;
 }
 
-void JoinPopup::OnJoin(CCObject*){
+void JoinPopup::OnJoin(CCObject*) {
     std::string address = m_addressInput->getString();
     std::string password = m_passInput->getString();
 
@@ -114,27 +114,39 @@ void JoinPopup::OnJoin(CCObject*){
 
     log::info("Attempting to join: {}:{}", ip, port);
 
-    // connect to ip
-    if (g_network->connect(ip,port,password)){
-        g_isHost = false;
-        g_isInSession = true;
+    auto loadcircle = LoadingCircle::create();
+    auto bg = CCLayerColor::create({0,0,0,180});
+    bg->setContentSize(CCDirector::get()->getWinSize());
+    this->addChild(bg);
+    std::thread([loadcircle, bg, ip, port, password]() {
+        CCTouchDispatcher::get()->setDispatchEvents(false);
+        loadcircle->setParentLayer(bg);
+        loadcircle->show();
 
-        g_sync->setUserID(g_network->getPeerID());
+        GJGameLevel* level = nullptr;
 
-        this->onClose(nullptr);
+        if (g_network->connect(ip,port,password)) {
+            g_isHost = false;
+            g_isInSession = true;
+            g_sync->setUserID(g_network->getPeerID());
+            //get level
+            level = GJGameLevel::create();
+            level->m_levelName = "Collab Session";
+            level->m_dontSave = true;
+        }
 
-        // go to editor
-        auto level = GJGameLevel::create();
-        level->m_levelName = "Collab Session";
-        level->m_dontSave = true;
-
-        auto scene = CCScene::create();
-        auto editorLayer = LevelEditorLayer::create(level, false);
-        scene->addChild(editorLayer);
-
-        CCDirector::sharedDirector()->replaceScene(CCTransitionFade::create(0.5f,scene));
-        
-    } else {
-        FLAlertLayer::create("Connection Failed", "Couldn't connect to host!", "OK")->show();
-    }
+        geode::queueInMainThread([loadcircle, bg, level]() {
+            loadcircle->fadeAndRemove();
+            bg->removeFromParent();
+            CCTouchDispatcher::get()->setDispatchEvents(true);
+            if (level) {
+                auto scene = CCScene::create();
+                auto editorLayer = LevelEditorLayer::create(level, false);
+                scene->addChild(editorLayer);
+                CCDirector::sharedDirector()->replaceScene(CCTransitionFade::create(0.5f,scene));
+            } else {
+                FLAlertLayer::create("Connection Failed", "Couldn't connect to host!", "OK")->show();
+            }
+        });
+    }).detach();
 }
