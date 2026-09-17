@@ -115,8 +115,12 @@ void JoinPopup::OnJoin(CCObject*) {
     log::info("Attempting to join: {}:{}", ip, port);
 
     auto loadcircle = LoadingCircle::create();
-    std::thread([loadcircle, ip, port, password]() {
+    auto bg = CCLayerColor::create({0,0,0,180});
+    bg->setContentSize(CCDirector::get()->getWinSize());
+    this->addChild(bg);
+    std::thread([loadcircle, bg, ip, port, password]() {
         CCTouchDispatcher::get()->setDispatchEvents(false);
+        loadcircle->setParentLayer(bg);
         loadcircle->show();
 
         GJGameLevel* level = nullptr;
@@ -131,9 +135,10 @@ void JoinPopup::OnJoin(CCObject*) {
             level->m_dontSave = true;
         }
 
-        geode::queueInMainThread([loadcircle, level]() {
+        geode::queueInMainThread([loadcircle, bg, level]() {
             loadcircle->fadeAndRemove();
-        CCTouchDispatcher::get()->setDispatchEvents(true);
+            bg->removeFromParent();
+            CCTouchDispatcher::get()->setDispatchEvents(true);
             if (level) {
                 auto scene = CCScene::create();
                 auto editorLayer = LevelEditorLayer::create(level, false);
@@ -144,30 +149,4 @@ void JoinPopup::OnJoin(CCObject*) {
             }
         });
     }).detach();
-
-    // connect to ip
-    /*
-    if (g_network->connect(ip,port,password)){
-        g_isHost = false;
-        g_isInSession = true;
-
-        g_sync->setUserID(g_network->getPeerID());
-
-        this->onClose(nullptr);
-
-        // go to editor
-        auto level = GJGameLevel::create();
-        level->m_levelName = "Collab Session";
-        level->m_dontSave = true;
-
-        auto scene = CCScene::create();
-        auto editorLayer = LevelEditorLayer::create(level, false);
-        scene->addChild(editorLayer);
-
-        CCDirector::sharedDirector()->replaceScene(CCTransitionFade::create(0.5f,scene));
-        
-    } else {
-        FLAlertLayer::create("Connection Failed", "Couldn't connect to host!", "OK")->show();
-    }
-    */
 }
