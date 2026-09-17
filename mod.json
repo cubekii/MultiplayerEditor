@@ -23,5 +23,16 @@
 	"links": {
 		"community": "https://discord.gg/eCfmxKgQpU",
 		"source": "https://github.com/ZyyeDev/MultiplayerEditor"
-	}
+	},
+	
+	"incompatibilities": {
+		"alk.editor-collab":{
+			"version": "*",
+			"breaking": true
+		},
+		"alk.editor-collab-ui":{
+			"version": "*",
+			"breaking": true
+		}
+    }
 }

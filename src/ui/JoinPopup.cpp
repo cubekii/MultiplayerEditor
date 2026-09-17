@@ -118,11 +118,11 @@ void JoinPopup::OnJoin(CCObject*) {
     auto bg = CCLayerColor::create({0,0,0,180});
     bg->setContentSize(CCDirector::get()->getWinSize());
     this->addChild(bg);
-    std::thread([loadcircle, bg, ip, port, password]() {
-        CCTouchDispatcher::get()->setDispatchEvents(false);
-        loadcircle->setParentLayer(bg);
-        loadcircle->show();
 
+    CCTouchDispatcher::get()->setDispatchEvents(false);
+    loadcircle->setParentLayer(bg);
+    loadcircle->show();
+    std::thread([loadcircle, bg, ip, port, password]() {
         GJGameLevel* level = nullptr;
 
         if (g_network->connect(ip,port,password)) {
@@ -131,8 +131,18 @@ void JoinPopup::OnJoin(CCObject*) {
             g_sync->setUserID(g_network->getPeerID());
             //get level
             level = GJGameLevel::create();
+            level->init();
+            
             level->m_levelName = "Collab Session";
             level->m_dontSave = true;
+            level->m_levelIndex = -1;
+            level->m_levelID = 0;
+            level->m_levelType = GJLevelType::Editor;
+
+            if (!level->m_lastBuildSave){
+                level->m_lastBuildSave = CCDictionary::create();
+                level->m_lastBuildSave->retain();
+            }
         }
 
         geode::queueInMainThread([loadcircle, bg, level]() {
